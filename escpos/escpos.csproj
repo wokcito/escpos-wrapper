@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <PackageReference Include="ESC-POS-USB-NET" Version="1.1.3" />
-    <PackageReference Include="ESCPOS_NET" Version="3.0.0" />
   </ItemGroup>
 
 </Project>

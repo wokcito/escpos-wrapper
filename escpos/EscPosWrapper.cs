@@ -1,4 +1,7 @@
-﻿using System.Text;
+using System.Text;
+using System.Text.Json;
+using System.Drawing;
+using System.IO;
 using ESC_POS_USB_NET.Enums;
 using ESC_POS_USB_NET.Printer;
 
@@ -8,12 +11,13 @@ namespace Wokcito
     {
         static void Main(string[] args)
         {
-            if (args.Length < 1)
+            if (args.Length < 2)
             {
                 return;
             }
 
             string printerName = args[0];
+            string commandsJson = args[1];
 
             /**
              * https://github.com/mtmsuhail/ESC-POS-USB-NET/issues/10
@@ -22,57 +26,16 @@ namespace Wokcito
 
             try
             {
-                Printer printer = new Printer(printerName, "UTF-8");
+                Printer printer = new Printer(printerName);
+                var commands = JsonSerializer.Deserialize<Command[]>(commandsJson);
 
-                printer.Append("NORMAL - 48 COLUMNS");
-                printer.Append("1...5...10...15...20...25...30...35...40...45.48");
-                printer.Separator();
-                printer.Append("Text Normal");
-                printer.BoldMode("Bold Text");
-                printer.UnderlineMode("Underlined text");
-                printer.Separator();
-                printer.ExpandedMode(PrinterModeState.On);
-                printer.Append("Expanded - 23 COLUMNS");
-                printer.Append("1...5...10...15...20..23");
-                printer.ExpandedMode(PrinterModeState.Off);
-                printer.Separator();
-                printer.CondensedMode(PrinterModeState.On);
-                printer.Append("Condensed - 64 COLUMNS");
-                printer.Append("1...5...10...15...20...25...30...35...40...45...50...55...60..64");
-                printer.CondensedMode(PrinterModeState.Off);
-                printer.Separator();
-                printer.DoubleWidth2();
-                printer.Append("Font Width 2");
-                printer.DoubleWidth3();
-                printer.Append("Font Width 3");
-                printer.NormalWidth();
-                printer.Append("Normal width");
-                printer.Separator();
-                printer.AlignRight();
-                printer.Append("Right aligned text");
-                printer.AlignCenter();
-                printer.Append("Center‑aligned text");
-                printer.AlignLeft();
-                printer.Append("Left aligned text");
-                printer.Separator();
-                printer.Font("Font A", Fonts.FontA);
-                printer.Font("Font B", Fonts.FontB);
-                printer.Font("Font C", Fonts.FontC);
-                printer.Font("Font D", Fonts.FontD);
-                printer.Font("Font E", Fonts.FontE);
-                printer.Font("Font Special A", Fonts.SpecialFontA);
-                printer.Font("Font Special B", Fonts.SpecialFontB);
-                printer.Separator();
-                printer.InitializePrint();
-                printer.SetLineHeight(24);
-                printer.Append("This is first line with line height of 30 dots");
-                printer.SetLineHeight(40);
-                printer.Append("This is second line with line height of 24 dots");
-                printer.Append("This is third line with line height of 40 dots");
-                printer.NewLines(3);
-                printer.Append("End of Test :)");
-                printer.Separator();
-                printer.FullPaperCut();
+                if (commands != null)
+                {
+                    foreach (var cmd in commands)
+                    {
+                        ExecuteCommand(printer, cmd);
+                    }
+                }
 
                 printer.PrintDocument();
             }
@@ -81,5 +44,205 @@ namespace Wokcito
                 Console.WriteLine($"Error al imprimir: {ex.Message}");
             }
         }
+
+        private static void ExecuteCommand(Printer printer, Command command)
+        {
+            switch (command.Type.ToLower())
+            {
+                // === TEXTO ===
+                case "append":
+                    printer.Append(command.Text ?? "");
+                    break;
+
+                case "appendwithoutlf":
+                    printer.AppendWithoutLf(command.Text ?? "");
+                    break;
+
+                // === MODOS DE FUENTE ===
+                case "boldmode":
+                    if (!string.IsNullOrEmpty(command.Text))
+                        printer.BoldMode(command.Text);
+                    else if (command.State.HasValue)
+                        printer.BoldMode(command.State.Value ? PrinterModeState.On : PrinterModeState.Off);
+                    break;
+
+                case "underlinemode":
+                    if (!string.IsNullOrEmpty(command.Text))
+                        printer.UnderlineMode(command.Text);
+                    else if (command.State.HasValue)
+                        printer.UnderlineMode(command.State.Value ? PrinterModeState.On : PrinterModeState.Off);
+                    break;
+
+                case "expandedmode":
+                    if (!string.IsNullOrEmpty(command.Text))
+                        printer.ExpandedMode(command.Text);
+                    else if (command.State.HasValue)
+                        printer.ExpandedMode(command.State.Value ? PrinterModeState.On : PrinterModeState.Off);
+                    break;
+
+                case "condensedmode":
+                    if (!string.IsNullOrEmpty(command.Text))
+                        printer.CondensedMode(command.Text);
+                    else if (command.State.HasValue)
+                        printer.CondensedMode(command.State.Value ? PrinterModeState.On : PrinterModeState.Off);
+                    break;
+
+                // === ANCHO DE FUENTE ===
+                case "doublewidth2":
+                    printer.DoubleWidth2();
+                    break;
+
+                case "doublewidth3":
+                    printer.DoubleWidth3();
+                    break;
+
+                case "normalwidth":
+                    printer.NormalWidth();
+                    break;
+
+                // === ALINEACIÓN ===
+                case "alignleft":
+                    printer.AlignLeft();
+                    break;
+
+                case "alignright":
+                    printer.AlignRight();
+                    break;
+
+                case "aligncenter":
+                    printer.AlignCenter();
+                    break;
+
+                // === FUENTES ===
+                case "font":
+                    if (!string.IsNullOrEmpty(command.Text) && command.FontType.HasValue)
+                        printer.Font(command.Text, (Fonts)command.FontType.Value);
+                    break;
+
+                // === SEPARADORES ===
+                case "separator":
+                    if (command.Character.HasValue)
+                        printer.Separator(command.Character.Value);
+                    else
+                        printer.Separator();
+                    break;
+
+                // === ALTURA DE LÍNEA ===
+                case "setlineheight":
+                    if (command.Height.HasValue)
+                        printer.SetLineHeight(command.Height.Value);
+                    break;
+
+                case "normallineheight":
+                    printer.NormalLineHeight();
+                    break;
+
+                // === SALTOS DE LÍNEA ===
+                case "newline":
+                    printer.NewLine();
+                    break;
+
+                case "newlines":
+                    if (command.Lines.HasValue)
+                        printer.NewLines(command.Lines.Value);
+                    break;
+
+                // === CORTE DE PAPEL ===
+                case "fullpapercut":
+                    printer.FullPaperCut();
+                    break;
+
+                case "partialpapercut":
+                    printer.PartialPaperCut();
+                    break;
+
+                // === CAJÓN ===
+                case "opendrawer":
+                    printer.OpenDrawer();
+                    break;
+
+                // === CÓDIGOS DE BARRAS ===
+                case "code128":
+                    if (!string.IsNullOrEmpty(command.Text))
+                    {
+                        var position = command.Position.HasValue ? (Positions)command.Position.Value : Positions.NotPrint;
+                        printer.Code128(command.Text, position);
+                    }
+                    break;
+
+                case "code39":
+                    if (!string.IsNullOrEmpty(command.Text))
+                    {
+                        var position = command.Position.HasValue ? (Positions)command.Position.Value : Positions.NotPrint;
+                        printer.Code39(command.Text, position);
+                    }
+                    break;
+
+                case "ean13":
+                    if (!string.IsNullOrEmpty(command.Text))
+                    {
+                        var position = command.Position.HasValue ? (Positions)command.Position.Value : Positions.NotPrint;
+                        printer.Ean13(command.Text, position);
+                    }
+                    break;
+
+                // === CÓDIGOS QR ===
+                case "qrcode":
+                    if (!string.IsNullOrEmpty(command.Text))
+                    {
+                        if (command.QrSize.HasValue)
+                            printer.QrCode(command.Text, (QrCodeSize)command.QrSize.Value);
+                        else
+                            printer.QrCode(command.Text);
+                    }
+                    break;
+
+                // === IMAGEN ===
+                case "image":
+                    if (!string.IsNullOrEmpty(command.ImagePath) && File.Exists(command.ImagePath))
+                    {
+                        using (var bitmap = new Bitmap(command.ImagePath))
+                        {
+                            printer.Image(bitmap);
+                        }
+                    }
+                    break;
+
+                // === UTILIDADES ===
+                case "clear":
+                    printer.Clear();
+                    break;
+
+                case "initializeprint":
+                    printer.InitializePrint();
+                    break;
+
+                case "autotest":
+                    printer.AutoTest();
+                    break;
+
+                case "testprinter":
+                    printer.TestPrinter();
+                    break;
+
+                default:
+                    Console.WriteLine($"Comando no reconocido: {command.Type}");
+                    break;
+            }
+        }
+    }
+
+    public class Command
+    {
+        public string Type { get; set; } = "";
+        public string? Text { get; set; }
+        public bool? State { get; set; }
+        public char? Character { get; set; }
+        public byte? Height { get; set; }
+        public int? Lines { get; set; }
+        public int? FontType { get; set; }
+        public int? Position { get; set; }
+        public int? QrSize { get; set; }
+        public string? ImagePath { get; set; }
     }
 }

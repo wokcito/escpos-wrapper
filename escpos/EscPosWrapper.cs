@@ -83,14 +83,10 @@ namespace Wokcito
                 case "underlinemode":
                     if (!string.IsNullOrEmpty(command.Text))
                         printer.UnderlineMode(command.Text);
-                    else if (command.State.HasValue)
-                        printer.UnderlineMode(command.State.Value ? PrinterModeState.On : PrinterModeState.Off);
                     break;
 
                 case "expandedmode":
-                    if (!string.IsNullOrEmpty(command.Text))
-                        printer.ExpandedMode(command.Text);
-                    else if (command.State.HasValue)
+                    if (command.State.HasValue)
                     {
                         printer.ExpandedMode(command.State.Value ? PrinterModeState.On : PrinterModeState.Off);
                         _currentColumns = command.State.Value ? ExpandedColumns : NormalColumns;
@@ -98,9 +94,7 @@ namespace Wokcito
                     break;
 
                 case "condensedmode":
-                    if (!string.IsNullOrEmpty(command.Text))
-                        printer.CondensedMode(command.Text);
-                    else if (command.State.HasValue)
+                    if (command.State.HasValue)
                     {
                         printer.CondensedMode(command.State.Value ? PrinterModeState.On : PrinterModeState.Off);
                         _currentColumns = command.State.Value ? CondensedColumns : NormalColumns;

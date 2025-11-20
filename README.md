@@ -87,7 +87,6 @@ Modo negrita (con texto o estado)
 Modo subrayado
 ```json
 {"Type":"underlinemode","Text":"Texto subrayado"}
-{"Type":"underlinemode","State":true}
 ```
 
 #### `expandedmode`

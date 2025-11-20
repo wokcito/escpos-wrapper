@@ -9,6 +9,12 @@ namespace Wokcito
 {
     class EscPosWrapper
     {
+        private const int NormalColumns = 48;
+        private const int ExpandedColumns = 24;
+        private const int CondensedColumns = 64;
+
+        private static int _currentColumns = NormalColumns;
+
         static void Main(string[] args)
         {
             if (args.Length < 2)
@@ -58,6 +64,14 @@ namespace Wokcito
                     printer.AppendWithoutLf(command.Text ?? "");
                     break;
 
+                case "printtwocolumns":
+                    string leftText = command.Text ?? "";
+                    string rightText = command.TextRight ?? "";
+                    int spaces = _currentColumns - leftText.Length - rightText.Length;
+                    if (spaces < 0) spaces = 0;
+                    printer.Append(leftText + new string(' ', spaces) + rightText);
+                    break;
+
                 // === MODOS DE FUENTE ===
                 case "boldmode":
                     if (!string.IsNullOrEmpty(command.Text))
@@ -77,14 +91,20 @@ namespace Wokcito
                     if (!string.IsNullOrEmpty(command.Text))
                         printer.ExpandedMode(command.Text);
                     else if (command.State.HasValue)
+                    {
                         printer.ExpandedMode(command.State.Value ? PrinterModeState.On : PrinterModeState.Off);
+                        _currentColumns = command.State.Value ? ExpandedColumns : NormalColumns;
+                    }
                     break;
 
                 case "condensedmode":
                     if (!string.IsNullOrEmpty(command.Text))
                         printer.CondensedMode(command.Text);
                     else if (command.State.HasValue)
+                    {
                         printer.CondensedMode(command.State.Value ? PrinterModeState.On : PrinterModeState.Off);
+                        _currentColumns = command.State.Value ? CondensedColumns : NormalColumns;
+                    }
                     break;
 
                 // === ANCHO DE FUENTE ===
@@ -236,6 +256,7 @@ namespace Wokcito
     {
         public string Type { get; set; } = "";
         public string? Text { get; set; }
+        public string? TextRight { get; set; }
         public bool? State { get; set; }
         public char? Character { get; set; }
         public byte? Height { get; set; }

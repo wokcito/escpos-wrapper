@@ -68,6 +68,12 @@ Agrega texto sin salto de línea
 {"Type":"appendwithoutlf","Text":"Texto"}
 ```
 
+#### `printtwocolumns`
+Imprime dos textos en la misma línea, uno alineado a la izquierda y otro a la derecha. Calcula automáticamente los espacios necesarios basándose en el ancho actual de la fuente (normal, expandida o condensada).
+```json
+{"Type":"printtwocolumns","Text":"Izquierda","TextRight":"Derecha"}
+```
+
 ### 🔤 **MODOS DE FUENTE**
 
 #### `boldmode`
@@ -85,13 +91,13 @@ Modo subrayado
 ```
 
 #### `expandedmode`
-Modo expandido
+Modo expandido. Al activar este modo, el cálculo de columnas se ajusta a 23 caracteres.
 ```json
 {"Type":"expandedmode","State":true}
 ```
 
 #### `condensedmode`
-Modo condensado
+Modo condensado. Al activar este modo, el cálculo de columnas se ajusta a 64 caracteres.
 ```json
 {"Type":"condensedmode","State":true}
 ```
@@ -99,7 +105,7 @@ Modo condensado
 ### 📐 **ANCHO DE FUENTE**
 
 #### `doublewidth2` / `doublewidth3` / `normalwidth`
-Control del ancho de fuente
+Control del ancho de fuente. `normalwidth` restablece el cálculo de columnas a 48 caracteres.
 ```json
 {"Type":"doublewidth2"}
 {"Type":"doublewidth3"}

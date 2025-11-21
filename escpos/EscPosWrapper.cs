@@ -14,6 +14,7 @@ namespace Wokcito
         private const int CondensedColumns = 64;
 
         private static int _currentColumns = NormalColumns;
+        private static int _widthMultiplier = 1;
 
         static void Main(string[] args)
         {
@@ -67,7 +68,8 @@ namespace Wokcito
                 case "printtwocolumns":
                     string leftText = command.Text ?? "";
                     string rightText = command.TextRight ?? "";
-                    int spaces = _currentColumns - leftText.Length - rightText.Length;
+                    int totalLength = (leftText.Length + rightText.Length) * _widthMultiplier;
+                    int spaces = (_currentColumns - totalLength) / _widthMultiplier;
                     if (spaces < 0) spaces = 0;
                     printer.Append(leftText + new string(' ', spaces) + rightText);
                     break;
@@ -104,14 +106,18 @@ namespace Wokcito
                 // === ANCHO DE FUENTE ===
                 case "doublewidth2":
                     printer.DoubleWidth2();
+                    _widthMultiplier = 2;
                     break;
 
                 case "doublewidth3":
                     printer.DoubleWidth3();
+                    _widthMultiplier = 3;
                     break;
 
                 case "normalwidth":
                     printer.NormalWidth();
+                    _currentColumns = NormalColumns;
+                    _widthMultiplier = 1;
                     break;
 
                 // === ALINEACIÓN ===
